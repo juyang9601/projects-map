@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta charset="utf-8">
+  		<meta name="viewport" content="width=device-width, initial-scale=1">
+  		<title>Ohio WRC Projects</title>
+
+		<link rel="stylesheet" href="css/styles.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/leaflet.fusesearch.css" />
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<script src="https://d3js.org/d3.v4.min.js"></script>
+
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+		   integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+		   crossorigin=""/>
+		   <!-- Make sure you put this AFTER Leaflet's CSS -->
+		<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+		  integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+		  crossorigin=""></script>
+		<script src="js/leaflet-search.js"></script>
+		<script src="js/fuse.js"></script>
+    <script src="js/leaflet.fusesearch.js"></script>
+		<script src="js/MarkerClusterGroup.js"></script>
+	  <script src="js/subgroup.js"></script>
+
+		<script type="text/javascript" src="js/projects.js"></script>
+		<script type="text/javascript" src="js/us-states.js"></script>
+		<script src="https://unpkg.com/leaflet.minichart/dist/leaflet.minichart.min.js" charset="utf-8"></script>
+
+
+			<style> #map { width: 900px; height: 550px; } </style>
+	</head>
+
+	<body>
+		<div id="first">
+		</div>
+		<div align = "center" id="mapid" style="width: 900px; height: 550px;"></div>
+		<script>
+		var mymap = L.map('mapid').setView([40.4, -82.6], 7);
+
+		var tileServer = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+		var tileAttribution = 'Map data: <a href="http://openstreetmap.org">OSM</a>';
+		L.tileLayer(tileServer, {attribution: tileAttribution,  maxZoom: 20}).addTo(mymap);
+
+		function style_state(feature) {
+			return {
+				weight: 2,
+				opacity: 1,
+				color: 'grey',
+				dashArray: '3',
+				fillOpacity: 0,
+			};
+		}
+    var Ohio = L.geoJson(statesData,{style:style_state}).addTo(mymap);
+
+		// create an icon object
+		var locIcon = L.icon({
+		    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+		    iconSize:     [28, 28], // size of the icon
+		    iconAnchor:   [22, 22], // point of the icon which will correspond to marker's location
+		    popupAnchor:  [-3, -26] // point from which the popup should open relative to the iconAnchor
+    });
+
+		function projectsLoc(feature, latlng) {
+		      return L.marker(latlng, {icon: locIcon});
+		};
+
+		function bindPopup(feature, layer){
+			feature.layer = layer;
+			layer.bindPopup("<b>"+feature.properties.Title+"</b>" + "<br/>"
+			 + "<br/>"+ "PI: "+ feature.properties.PI_name
+			 +"<br/>" + feature.properties.Department
+			 +"<br/>" + feature.properties.University
+			 +"<br/>" + '<a href= "'+ feature.properties.Link +'"> Project report </a>');
+		}
+
+		//var projects = L.geoJson(projectsData,{
+		//	pointToLayer: projectsLoc,
+		//	onEachFeature: bindPopup
+		//}).addTo(mymap);
+
+
+		var projects06 = L.geoJson(projectsData, {
+			pointToLayer: projectsLoc,
+		  filter: function(feature, layer) {
+		    return (feature.properties.Year === "2016-2010");
+		  },
+			onEachFeature: bindPopup
+		}).addTo(mymap);
+
+		var projects11 = L.geoJson(projectsData, {
+			pointToLayer: projectsLoc,
+			filter: function(feature, layer) {
+				return (feature.properties.Year === "2011-2015");
+			},
+			onEachFeature: bindPopup
+		}).addTo(mymap);
+
+		var projects16 = L.geoJson(projectsData, {
+			pointToLayer: projectsLoc,
+		  filter: function(feature, layer) {
+		    return (feature.properties.Year === "2016-2020");
+		  },
+			onEachFeature: bindPopup
+		}).addTo(mymap);
+
+		var overlayMaps = {
+		"2016 - 2020": projects16,
+		"2011 - 2015": projects11,
+		"2006 - 2010": projects06,
+  	};
+	  L.control.layers(null,overlayMaps).addTo(mymap);
+
+		var options = {
+		 placeholder: 'Key words, PI or University',
+		 maxResultLength: 15,
+		 threshold: 0.5,
+		 showInvisibleFeatures: false,
+		 };
+
+		var searchCtrl = L.control.fuseSearch(options);
+		searchCtrl.addTo(mymap);
+		searchCtrl.indexFeatures(projectsData, ['Title', 'PI_name', 'University']);
+
+
+		</script>
+	</body>
+</html>
